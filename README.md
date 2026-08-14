@@ -1,22 +1,32 @@
 # SponsorLoop V2
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/majaber1/SponsorLoop)
+
 Saudi-first bilingual sponsorship and advertising marketplace. V2 upgrades the interactive prototype into a production-oriented Next.js application with real API boundaries, authentication, PostgreSQL support and explainable matching.
+
+**Enhanced with features from top international platforms** (SponsorUnited, OpenSponsorship, Sponsorium, DoSponsor).
 
 ## What works
 
 - Arabic and English routes (`/ar`, `/en`) with real RTL/LTR
-- Marketplace + client-side filters
+- Marketplace with sort, filter, grid/list views, and featured badges
+- 17 demo opportunities across 7 Saudi cities (Riyadh, Jeddah, Dammam, Makkah, Madinah, Khobar, Tabuk)
 - Opportunity detail and sell-side listing flow
+- Side-by-side opportunity comparison tool (up to 3)
 - Campaign creation flow
 - Explainable AI Planner / matching API
 - Advertiser dashboard
 - Rights-holder dashboard
-- Deals list + staged Deal Room
+- Analytics dashboard with pipeline charts, category breakdown, geographic distribution, quality metrics
+- Deals list + staged Deal Room with in-deal messaging/activity timeline
+- In-app notification system with bell icon and dropdown
+- Favorites/bookmarks API
+- Post-deal review/rating system
 - Admin / verification queue
 - Pricing model
 - Trust & compliance center
 - Email/password auth with signed HttpOnly session cookie
-- Demo mode with no database required
+- Demo mode with no database required (5 demo deals at various stages)
 - PostgreSQL production mode through `DATABASE_URL`
 - Health endpoint showing DB / AI / storage / payments / e-sign status
 
