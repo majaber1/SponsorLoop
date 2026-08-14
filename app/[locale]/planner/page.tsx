@@ -1,0 +1,3 @@
+import { PlannerClient } from "@/components/planner-client";
+import { isLocale } from "@/lib/i18n";
+export default async function PlannerPage({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{budget?:string;objective?:string}>}){const{locale:raw}=await params;if(!isLocale(raw))return null;const sp=await searchParams;const budget=Number(sp.budget||50000);return <section className="page-section planner-page"><div className="container"><PlannerClient locale={raw} initialBudget={Number.isFinite(budget)?budget:50000} initialObjective={sp.objective||"leads"}/></div></section>}

@@ -1,0 +1,7 @@
+"use client";
+import { useState } from "react";
+import type { DealStage, Locale } from "@/lib/types";
+
+const stages: DealStage[]=["request","negotiation","approval","contract","payment","delivery","completed"];
+const labels={ar:{request:"طلب",negotiation:"تفاوض",approval:"اعتماد",contract:"عقد",payment:"دفع",delivery:"تنفيذ",completed:"مكتملة"},en:{request:"Request",negotiation:"Negotiation",approval:"Approval",contract:"Contract",payment:"Payment",delivery:"Delivery",completed:"Completed"}};
+export function DealStageClient({locale,id,initial}:{locale:Locale;id:string;initial:DealStage}){const[stage,setStage]=useState(initial);const[busy,setBusy]=useState(false);const idx=stages.indexOf(stage);const advance=async()=>{if(idx>=stages.length-1)return;setBusy(true);const next=stages[idx+1];const r=await fetch(`/api/deals/${id}`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({stage:next})});if(r.ok)setStage(next);setBusy(false)};return <div><div className="stage-track">{stages.map((s,i)=><div key={s} className={i<=idx?"stage active":"stage"}><span>{i+1}</span><small>{labels[locale][s]}</small></div>)}</div><button className="button button-primary" onClick={advance} disabled={busy||idx===stages.length-1}>{idx===stages.length-1?(locale==="ar"?"الصفقة مكتملة":"Deal completed"):(busy?(locale==="ar"?"جاري التحديث":"Updating"):(locale==="ar"?"انتقل للمرحلة التالية":"Advance deal"))}</button></div>}

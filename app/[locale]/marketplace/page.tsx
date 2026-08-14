@@ -1,0 +1,4 @@
+import { MarketplaceClient } from "@/components/marketplace-client";
+import { isLocale } from "@/lib/i18n";
+import { listOpportunities } from "@/lib/repository";
+export default async function MarketplacePage({params}:{params:Promise<{locale:string}>}){const{locale:raw}=await params;if(!isLocale(raw))return null;const ar=raw==="ar";const items=await listOpportunities();return <section className="page-section"><div className="container"><div className="page-title"><span className="eyebrow">Marketplace</span><h1>{ar?"كل فرص الرعاية والإعلان في مكان واحد":"Sponsorship and advertising inventory in one place"}</h1><p>{ar?"اكتشف، قارن وابدأ الصفقة مباشرة. الأسعار والوصول وحالة التحقق ظاهرة قبل التواصل.":"Discover, compare and start a deal directly. Pricing, reach and verification status are visible upfront."}</p></div><MarketplaceClient locale={raw} items={items}/></div></section>}

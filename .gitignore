@@ -1,0 +1,8 @@
+node_modules
+.next
+.env
+.env.local
+.vercel
+coverage
+.tmp-match-test
+.DS_Store

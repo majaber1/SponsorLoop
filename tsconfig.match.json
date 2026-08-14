@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": ".tmp-match-test",
+    "skipLibCheck": true
+  },
+  "include": ["lib/matching.ts", "tests/test-matching.ts"]
+}
