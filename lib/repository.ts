@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { databaseEnabled, pool, query } from "./db";
 import { demoState } from "./demo-store";
-import type { CampaignInput, Deal, DealStage, Opportunity, OpportunityCategory, SessionUser } from "./types";
+import type { CampaignInput, Deal, DealStage, Opportunity, OpportunityCategory, SessionUser, SponsorshipRequest } from "./types";
 
 function rowToOpportunity(row: any): Opportunity {
   return {
@@ -293,6 +293,40 @@ export async function toggleFavorite(opportunityId: string) {
     return demoState.favorites;
   }
   return [];
+}
+
+export async function listSponsorshipRequests(filters?: { category?: string; city?: string }): Promise<SponsorshipRequest[]> {
+  if (!databaseEnabled) {
+    let data = demoState.sponsorshipRequests;
+    if (filters?.category && filters.category !== "all") data = data.filter((x) => x.category === filters.category);
+    if (filters?.city && filters.city !== "all") data = data.filter((x) => x.city.toLowerCase() === filters.city!.toLowerCase());
+    return data;
+  }
+  return [];
+}
+
+export async function createSponsorshipRequest(input: {
+  organizationNameAr: string;
+  organizationNameEn: string;
+  category: OpportunityCategory;
+  titleAr: string;
+  titleEn: string;
+  descriptionAr: string;
+  descriptionEn: string;
+  city: string;
+  budgetRange: string;
+  audienceSize: number;
+}): Promise<SponsorshipRequest> {
+  const request: SponsorshipRequest = {
+    ...input,
+    id: `req-${randomUUID()}`,
+    status: "open",
+    createdAt: new Date().toISOString()
+  };
+  if (!databaseEnabled) {
+    demoState.sponsorshipRequests.unshift(request);
+  }
+  return request;
 }
 
 export async function register(input: { email: string; password: string; name: string; organizationName: string; role: SessionUser["role"] }): Promise<SessionUser> {

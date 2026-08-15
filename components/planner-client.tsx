@@ -8,8 +8,10 @@ import { Sparkles } from "./icons";
 const categoryOptions: { id: OpportunityCategory; ar: string; en: string }[] = [
   { id: "events", ar: "فعاليات", en: "Events" }, { id: "creators", ar: "صناع محتوى", en: "Creators" },
   { id: "podcasts", ar: "بودكاست", en: "Podcasts" }, { id: "sports", ar: "رياضة", en: "Sports" },
-  { id: "digital", ar: "رقمي", en: "Digital" }, { id: "ooh", ar: "خارجي", en: "OOH" },
-  { id: "community", ar: "مجتمعات", en: "Communities" }, { id: "gaming", ar: "Gaming", en: "Gaming" }
+  { id: "athletes", ar: "رياضيون", en: "Athletes" }, { id: "hackathons", ar: "هاكاثونات", en: "Hackathons" },
+  { id: "clubs", ar: "أندية", en: "Clubs" }, { id: "digital", ar: "رقمي", en: "Digital" },
+  { id: "ooh", ar: "خارجي", en: "OOH" }, { id: "community", ar: "مجتمعات", en: "Communities" },
+  { id: "gaming", ar: "Gaming", en: "Gaming" }
 ];
 
 export function PlannerClient({ locale, initialBudget = 50000, initialObjective = "leads" }: { locale: Locale; initialBudget?: number; initialObjective?: string }) {

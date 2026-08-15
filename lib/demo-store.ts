@@ -1,5 +1,5 @@
-import { demoDealMessages, demoDeals, demoNotifications, demoOpportunities, demoReviews } from "./demo-data";
-import type { CampaignInput, Deal, DealMessage, Notification, Opportunity, Review } from "./types";
+import { demoDealMessages, demoDeals, demoNotifications, demoOpportunities, demoReviews, demoSponsorshipRequests } from "./demo-data";
+import type { CampaignInput, Deal, DealMessage, Notification, Opportunity, Review, SponsorshipRequest } from "./types";
 
 type DemoCampaign = CampaignInput & { id: string; createdAt: string; status: string };
 
@@ -11,6 +11,7 @@ type DemoState = {
   messages: DealMessage[];
   reviews: Review[];
   favorites: string[];
+  sponsorshipRequests: SponsorshipRequest[];
 };
 
 const globalForDemo = globalThis as unknown as { sponsorLoopDemo?: DemoState };
@@ -23,7 +24,8 @@ export const demoState: DemoState =
     notifications: structuredClone(demoNotifications),
     messages: structuredClone(demoDealMessages),
     reviews: structuredClone(demoReviews),
-    favorites: []
+    favorites: [],
+    sponsorshipRequests: structuredClone(demoSponsorshipRequests)
   };
 
 if (!globalForDemo.sponsorLoopDemo) globalForDemo.sponsorLoopDemo = demoState;

@@ -7,7 +7,10 @@ export type OpportunityCategory =
   | "digital"
   | "ooh"
   | "community"
-  | "gaming";
+  | "gaming"
+  | "athletes"
+  | "hackathons"
+  | "clubs";
 
 export type Opportunity = {
   id: string;
@@ -96,6 +99,44 @@ export type Review = {
   comment: string;
   reviewerName: string;
   createdAt: string;
+};
+
+export type PackageTier = {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  price: number;
+  reach: number;
+  perks: string[];
+};
+
+export type SponsorshipRequest = {
+  id: string;
+  organizationNameAr: string;
+  organizationNameEn: string;
+  category: OpportunityCategory;
+  titleAr: string;
+  titleEn: string;
+  descriptionAr: string;
+  descriptionEn: string;
+  city: string;
+  budgetRange: string;
+  audienceSize: number;
+  status: "open" | "matched" | "closed";
+  createdAt: string;
+};
+
+export type SuccessStory = {
+  id: string;
+  brandNameAr: string;
+  brandNameEn: string;
+  partnerNameAr: string;
+  partnerNameEn: string;
+  category: OpportunityCategory;
+  quoteAr: string;
+  quoteEn: string;
+  metric: string;
+  metricLabel: string;
 };
 
 export type DealStage =

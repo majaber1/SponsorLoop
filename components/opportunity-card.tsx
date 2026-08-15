@@ -4,8 +4,8 @@ import type { Locale, Opportunity } from "@/lib/types";
 import { Check, Chevron, Shield } from "./icons";
 
 const categoryLabel = {
-  ar: { events: "فعاليات", creators: "صناع محتوى", podcasts: "بودكاست وإعلام", sports: "رياضة", digital: "منصات رقمية", ooh: "إعلان خارجي", community: "جامعات ومجتمعات", gaming: "ألعاب ورياضات إلكترونية" },
-  en: { events: "Events", creators: "Creators", podcasts: "Podcasts & media", sports: "Sports", digital: "Digital platforms", ooh: "OOH", community: "Universities & communities", gaming: "Gaming & esports" }
+  ar: { events: "فعاليات", creators: "صناع محتوى", podcasts: "بودكاست وإعلام", sports: "رياضة", digital: "منصات رقمية", ooh: "إعلان خارجي", community: "جامعات ومجتمعات", gaming: "ألعاب ورياضات إلكترونية", athletes: "رياضيون أفراد", hackathons: "هاكاثونات ومسابقات", clubs: "أندية ومجتمعات" },
+  en: { events: "Events", creators: "Creators", podcasts: "Podcasts & media", sports: "Sports", digital: "Digital platforms", ooh: "OOH", community: "Universities & communities", gaming: "Gaming & esports", athletes: "Athletes", hackathons: "Hackathons & competitions", clubs: "Clubs & societies" }
 };
 
 export function OpportunityCard({ locale, item, score, compact }: { locale: Locale; item: Opportunity; score?: number; compact?: boolean }) {
