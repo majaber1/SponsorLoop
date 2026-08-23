@@ -14,7 +14,7 @@ const cats: { id: "all" | OpportunityCategory; ar: string; en: string }[] = [
 
 type SortOption = "featured" | "price_asc" | "price_desc" | "reach" | "trust";
 
-export function MarketplaceClient({ locale, items }: { locale: Locale; items: Opportunity[] }) {
+export function MarketplaceClient({ locale, items, favorites = [] }: { locale: Locale; items: Opportunity[]; favorites?: string[] }) {
   const ar = locale === "ar";
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<"all" | OpportunityCategory>("all");
@@ -72,7 +72,7 @@ export function MarketplaceClient({ locale, items }: { locale: Locale; items: Op
       </div>
       <div className="results-meta"><strong>{filtered.length}</strong> {ar ? "فرصة متاحة" : "opportunities available"}</div>
       <div className={view === "grid" ? "opportunity-grid" : "opportunity-list"}>
-        {filtered.map((item) => <OpportunityCard key={item.id} locale={locale} item={item} compact={view === "list"} />)}
+        {filtered.map((item) => <OpportunityCard key={item.id} locale={locale} item={item} compact={view === "list"} favorited={favorites.includes(item.id)} />)}
       </div>
       {!filtered.length && <div className="empty-state"><Search size={28}/><h3>{ar ? "لا توجد نتائج بهذه الفلاتر" : "No opportunities match these filters"}</h3><p>{ar ? "جرّب توسيع الميزانية أو اختيار فئة أخرى." : "Try a broader budget or another category."}</p></div>}
     </div>
