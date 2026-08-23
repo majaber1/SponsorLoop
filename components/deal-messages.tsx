@@ -9,12 +9,20 @@ export function DealMessages({ locale, dealId }: { locale: Locale; dealId: strin
   const [messages, setMessages] = useState<DealMessage[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [user, setUser] = useState<{ name: string; role: string } | null>(null);
 
   useEffect(() => {
     fetch(`/api/deals/${dealId}/messages`)
       .then((r) => r.json())
       .then((j) => setMessages(j.data ?? []));
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.user) setUser({ name: j.user.name, role: j.user.role });
+      });
   }, [dealId]);
+
+  const senderRole = user?.role === "owner" ? "seller" : "buyer";
 
   const send = async () => {
     if (!text.trim()) return;
@@ -22,7 +30,7 @@ export function DealMessages({ locale, dealId }: { locale: Locale; dealId: strin
     const r = await fetch(`/api/deals/${dealId}/messages`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: text, senderName: "Demo Brand", senderRole: "buyer" })
+      body: JSON.stringify({ message: text, senderName: user?.name ?? "User", senderRole })
     });
     if (r.ok) {
       const j = await r.json();
