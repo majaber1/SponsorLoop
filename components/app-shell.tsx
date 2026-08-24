@@ -4,6 +4,7 @@ import { dictionary, localePath } from "@/lib/i18n";
 import { getSession } from "@/lib/session";
 import type { Locale } from "@/lib/types";
 import { BarChart, Globe, Layers, Megaphone, Shield, Sparkles, TrendingUp, User } from "./icons";
+import { MobileMenuButton, SignOutButton } from "./mobile-nav";
 import { NotificationBell } from "./notification-bell";
 
 export async function AppShell({ locale, children }: { locale: Locale; children: React.ReactNode }) {
@@ -34,10 +35,14 @@ export async function AppShell({ locale, children }: { locale: Locale; children:
             <NotificationBell locale={locale} />
             <Link className="icon-button" href={localePath(otherLocale)} aria-label="Switch language"><Globe size={18}/><span>{otherLocale.toUpperCase()}</span></Link>
             {session ? (
-              <Link className="profile-pill" href={localePath(locale, "dashboard")}><span className="avatar">{session.name.slice(0,1)}</span><span>{session.name}</span></Link>
+              <>
+                <Link className="profile-pill" href={localePath(locale, "dashboard")}><span className="avatar">{session.name.slice(0,1)}</span><span>{session.name}</span></Link>
+                <SignOutButton locale={locale} />
+              </>
             ) : (
               <Link className="button button-ghost compact" href={localePath(locale, "auth/sign-in")}><User size={17}/>{t.common.signIn}</Link>
             )}
+            <MobileMenuButton locale={locale} isLoggedIn={!!session} />
           </div>
         </div>
       </header>

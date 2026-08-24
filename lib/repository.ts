@@ -127,6 +127,26 @@ export async function createOpportunity(input: {
   return rowToOpportunity({ ...result.rows[0], organization_name_ar: org.rows[0]?.name_ar, organization_name_en: org.rows[0]?.name_en ?? "Organization" });
 }
 
+export async function verifyOpportunity(id: string, approved: boolean) {
+  if (!databaseEnabled) {
+    const opp = demoState.opportunities.find((x) => x.id === id);
+    if (!opp) return null;
+    if (approved) {
+      opp.verified = true;
+      opp.trustScore = Math.max(opp.trustScore ?? 55, 80);
+    } else {
+      demoState.opportunities = demoState.opportunities.filter((x) => x.id !== id);
+    }
+    return opp;
+  }
+  if (approved) {
+    const result = await query<any>("UPDATE opportunities SET verification_status='verified', trust_score=GREATEST(trust_score,80) WHERE id=$1 RETURNING *", [id]);
+    return result.rows[0] ?? null;
+  }
+  const result = await query<any>("UPDATE opportunities SET status='rejected' WHERE id=$1 RETURNING *", [id]);
+  return result.rows[0] ?? null;
+}
+
 export async function createCampaign(input: CampaignInput, organizationId?: string, userId?: string) {
   if (!databaseEnabled) {
     const item = { ...input, id: `camp-${randomUUID()}`, createdAt: new Date().toISOString(), status: "draft" };
@@ -225,8 +245,15 @@ export async function updateDealStage(id: string, stage: DealStage, actorOrgId?:
 
 export async function authenticate(email: string, password: string): Promise<SessionUser | null> {
   if (!databaseEnabled) {
-    if (email.toLowerCase() !== "demo@sponsorloop.sa" || password !== "Demo123!") return null;
-    return { id: "user-demo", email, name: "Demo Advertiser", locale: "ar", role: "advertiser", organizationId: "org-demo-brand", organizationName: "Demo Brand" };
+    const demoAccounts: Record<string, SessionUser> = {
+      "demo@sponsorloop.sa": { id: "user-demo", email: "demo@sponsorloop.sa", name: "Demo Advertiser", locale: "ar", role: "advertiser", organizationId: "org-demo-brand", organizationName: "Demo Brand" },
+      "owner@sponsorloop.sa": { id: "user-owner", email: "owner@sponsorloop.sa", name: "Demo Rights Holder", locale: "ar", role: "owner", organizationId: "org-demo-owner", organizationName: "Demo Rights Holder Org" },
+      "agency@sponsorloop.sa": { id: "user-agency", email: "agency@sponsorloop.sa", name: "Demo Agency", locale: "ar", role: "agency", organizationId: "org-demo-agency", organizationName: "Demo Agency" },
+      "admin@sponsorloop.sa": { id: "user-admin", email: "admin@sponsorloop.sa", name: "Admin", locale: "ar", role: "admin", organizationId: "org-admin", organizationName: "SponsorLoop" },
+    };
+    const account = demoAccounts[email.toLowerCase()];
+    if (!account || password !== "Demo123!") return null;
+    return account;
   }
   const result = await query<any>(`
     SELECT u.*, m.role, o.id AS organization_id, o.name_en AS organization_name

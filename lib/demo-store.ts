@@ -29,3 +29,14 @@ export const demoState: DemoState =
   };
 
 if (!globalForDemo.sponsorLoopDemo) globalForDemo.sponsorLoopDemo = demoState;
+
+export function resetDemoState() {
+  demoState.opportunities = structuredClone(demoOpportunities);
+  demoState.campaigns = [];
+  demoState.deals = structuredClone(demoDeals);
+  demoState.notifications = structuredClone(demoNotifications);
+  demoState.messages = structuredClone(demoDealMessages);
+  demoState.reviews = structuredClone(demoReviews);
+  demoState.favorites = [];
+  demoState.sponsorshipRequests = structuredClone(demoSponsorshipRequests);
+}

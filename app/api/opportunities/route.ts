@@ -4,7 +4,7 @@ import { createOpportunity, listOpportunities } from "@/lib/repository";
 import { getSession } from "@/lib/session";
 import { databaseEnabled } from "@/lib/db";
 
-const category = z.enum(["events", "creators", "podcasts", "sports", "digital", "ooh", "community", "gaming"]);
+const category = z.enum(["events", "creators", "podcasts", "sports", "digital", "ooh", "community", "gaming", "athletes", "hackathons", "clubs"]);
 const createSchema = z.object({
   titleAr: z.string().min(3), titleEn: z.string().min(3), descriptionAr: z.string().optional(), descriptionEn: z.string().optional(), category,
   city: z.string().min(2), startingPrice: z.number().positive(), estimatedReach: z.number().nonnegative(), audience: z.array(z.string()).default([]), formats: z.array(z.string()).default([])

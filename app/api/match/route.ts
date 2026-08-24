@@ -8,7 +8,7 @@ const schema = z.object({
   objective: z.string().default("awareness"),
   budget: z.number().positive(),
   city: z.string().optional(),
-  categories: z.array(z.enum(["events", "creators", "podcasts", "sports", "digital", "ooh", "community", "gaming"])).optional(),
+  categories: z.array(z.enum(["events", "creators", "podcasts", "sports", "digital", "ooh", "community", "gaming", "athletes", "hackathons", "clubs"])).optional(),
   audience: z.array(z.string()).optional()
 });
 

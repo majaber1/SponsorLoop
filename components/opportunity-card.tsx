@@ -2,13 +2,14 @@ import Link from "next/link";
 import { localePath } from "@/lib/i18n";
 import type { Locale, Opportunity } from "@/lib/types";
 import { Check, Chevron, Shield } from "./icons";
+import { FavoriteButton } from "./favorite-button";
 
 const categoryLabel = {
   ar: { events: "فعاليات", creators: "صناع محتوى", podcasts: "بودكاست وإعلام", sports: "رياضة", digital: "منصات رقمية", ooh: "إعلان خارجي", community: "جامعات ومجتمعات", gaming: "ألعاب ورياضات إلكترونية", athletes: "رياضيون أفراد", hackathons: "هاكاثونات ومسابقات", clubs: "أندية ومجتمعات" },
   en: { events: "Events", creators: "Creators", podcasts: "Podcasts & media", sports: "Sports", digital: "Digital platforms", ooh: "OOH", community: "Universities & communities", gaming: "Gaming & esports", athletes: "Athletes", hackathons: "Hackathons & competitions", clubs: "Clubs & societies" }
 };
 
-export function OpportunityCard({ locale, item, score, compact }: { locale: Locale; item: Opportunity; score?: number; compact?: boolean }) {
+export function OpportunityCard({ locale, item, score, compact, favorited }: { locale: Locale; item: Opportunity; score?: number; compact?: boolean; favorited?: boolean }) {
   const ar = locale === "ar";
 
   if (compact) {
@@ -56,7 +57,10 @@ export function OpportunityCard({ locale, item, score, compact }: { locale: Loca
         </div>
         <div className="card-footer">
           <Link className="card-link" href={localePath(locale, `opportunities/${item.id}`)}>{ar ? "عرض الفرصة" : "View opportunity"}<Chevron size={17}/></Link>
-          <span className="trust-mini">{item.trustScore}/100</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <FavoriteButton opportunityId={item.id} initialFav={!!favorited} />
+            <span className="trust-mini">{item.trustScore}/100</span>
+          </span>
         </div>
       </div>
     </article>
