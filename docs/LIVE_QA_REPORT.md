@@ -27,7 +27,7 @@ Agency and multi-brand enterprise workspaces are Phase 2. A sponsor/buyer role c
 | Marketplace filters | PASS | Search/filter journey works on current demo inventory |
 | AI planner | FAIL | A SAR 30,000 budget produced a plan costing SAR 51,500 while showing no remaining budget |
 | Sign-in page | PASS in demo mode | Demo credentials are displayed publicly |
-| Sign-up route | FAIL / P0 | /ar/auth/sign-up renders the sign-in experience instead of a usable account-creation form |
+| Sign-up route | PASS (form rendering) | A fresh direct load of /ar/auth/sign-up correctly shows name, organization, role, email and password. Account durability still requires production DB verification. |
 | Durable accounts | NOT READY | UI states accounts become durable only when PostgreSQL is connected |
 | Real two-party deal | NOT PROVEN | No evidence of a completed fresh-account owner→buyer→deal→delivery journey |
 | Payments / escrow | NOT CONFIGURED | No production settlement provider |
@@ -94,7 +94,7 @@ Every listing must support deliverables, quantities, dates, exclusions, audience
 
 ## P0 blockers before public launch
 
-1. Fix sign-up and role selection.
+1. Verify sign-up persistence, validation, email verification and role enforcement against production PostgreSQL.
 2. Connect production PostgreSQL and remove in-process/demo persistence.
 3. Complete repository methods currently stubbed in database mode (messages, reviews, favorites, requests, notifications and related deal data).
 4. Make the two-sided deal lifecycle durable: offer → counteroffer → acceptance → contract → payment status → delivery evidence → approval → rating.
