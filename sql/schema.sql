@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS memberships (
 CREATE TABLE IF NOT EXISTS opportunities (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id uuid NOT NULL REFERENCES organizations(id),
-  category text NOT NULL CHECK (category IN ('events','creators','podcasts','sports','digital','ooh','community','gaming')),
+  category text NOT NULL CHECK (category IN ('events','creators','podcasts','sports','digital','ooh','community','gaming','athletes','hackathons','clubs')),
   title_ar text NOT NULL,
   title_en text NOT NULL,
   description_ar text,
@@ -160,8 +160,69 @@ CREATE TABLE IF NOT EXISTS audit_log (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type text NOT NULL DEFAULT 'system',
+  title_ar text NOT NULL,
+  title_en text NOT NULL,
+  body_ar text NOT NULL DEFAULT '',
+  body_en text NOT NULL DEFAULT '',
+  link text,
+  is_read boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS deal_messages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  deal_id uuid NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+  sender_user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  sender_name text NOT NULL,
+  sender_role text NOT NULL CHECK (sender_role IN ('buyer','seller','system')),
+  message text NOT NULL CHECK (char_length(message) BETWEEN 1 AND 4000),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  deal_id uuid NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+  reviewer_user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reviewer_name text NOT NULL,
+  rating integer NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment text NOT NULL CHECK (char_length(comment) BETWEEN 1 AND 2000),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (deal_id, reviewer_user_id)
+);
+
+CREATE TABLE IF NOT EXISTS favorites (
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  opportunity_id uuid NOT NULL REFERENCES opportunities(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, opportunity_id)
+);
+
+CREATE TABLE IF NOT EXISTS sponsorship_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid REFERENCES organizations(id) ON DELETE SET NULL,
+  organization_name_ar text NOT NULL,
+  organization_name_en text NOT NULL,
+  category text NOT NULL CHECK (category IN ('events','creators','podcasts','sports','digital','ooh','community','gaming','athletes','hackathons','clubs')),
+  title_ar text NOT NULL,
+  title_en text NOT NULL,
+  description_ar text NOT NULL DEFAULT '',
+  description_en text NOT NULL DEFAULT '',
+  city text NOT NULL,
+  budget_range text NOT NULL,
+  audience_size bigint NOT NULL DEFAULT 0 CHECK (audience_size >= 0),
+  status text NOT NULL DEFAULT 'open' CHECK (status IN ('open','matched','closed')),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_opportunities_search ON opportunities(category,country_code,city,status,starting_price);
 CREATE INDEX IF NOT EXISTS idx_opportunities_featured ON opportunities(featured,status,created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_deals_parties ON deals(buyer_org_id,seller_org_id,stage);
 CREATE INDEX IF NOT EXISTS idx_measurement_deal ON measurement_events(deal_id,metric,measured_at);
 CREATE INDEX IF NOT EXISTS idx_campaign_org ON campaigns(organization_id,status,created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id,is_read,created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_deal_messages_deal ON deal_messages(deal_id,created_at);
+CREATE INDEX IF NOT EXISTS idx_requests_search ON sponsorship_requests(status,category,city,created_at DESC);
