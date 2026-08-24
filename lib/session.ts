@@ -5,7 +5,8 @@ import type { SessionUser } from "./types";
 const COOKIE_NAME = "sponsorloop_session";
 
 function secret() {
-  const value = process.env.SESSION_SECRET || "sponsorloop-demo-session-secret-change-in-production";
+  const value = process.env.SESSION_SECRET || (process.env.NODE_ENV === "production" ? "" : "sponsorloop-demo-session-secret-change-in-production");
+  if (value.length < 32) throw new Error("SESSION_SECRET must be configured with at least 32 characters");
   return new TextEncoder().encode(value);
 }
 
