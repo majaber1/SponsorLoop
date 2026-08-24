@@ -37,7 +37,12 @@ export function PlannerClient({ locale, initialBudget = 50000, initialObjective 
   useEffect(()=>{ void run(); // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
   const toggle = (id: OpportunityCategory) => setCategories((current)=>current.includes(id) ? current.filter((x)=>x!==id) : [...current,id]);
-  const mixTotal = results.slice(0,3).reduce((sum,r)=>sum+r.opportunity.startingPrice,0);
+  const suggestedMix = results.reduce<MatchResult[]>((selected,item)=>{
+    if(selected.length>=3) return selected;
+    const used=selected.reduce((sum,r)=>sum+r.opportunity.startingPrice,0);
+    return used+item.opportunity.startingPrice<=budget?[...selected,item]:selected;
+  },[]);
+  const mixTotal = suggestedMix.reduce((sum,r)=>sum+r.opportunity.startingPrice,0);
   return <div className="planner-layout">
     <aside className="planner-sidebar panel">
       <div className="eyebrow"><Sparkles size={17}/>{ar ? "موجّه بالبيانات" : "Data-guided"}</div>
@@ -53,7 +58,7 @@ export function PlannerClient({ locale, initialBudget = 50000, initialObjective 
       <div className="results-head"><div><span className="eyebrow">SponsorLoop AI</span><h1>{ar ? "أفضل الفرص لهذه الحملة" : "Best opportunities for this campaign"}</h1><p>{ar ? "الترتيب مبني على ملاءمة الجمهور والهدف والميزانية والموقع والثقة والأداء والتوافر." : "Ranking combines audience, objective, budget, geography, trust, performance and availability."}</p></div><span className="mode-pill">{mode === "deterministic+ai" ? "Scoring + AI" : ar ? "تقييم قابل للتفسير" : "Explainable scoring"}</span></div>
       {results.length>0 && <div className="recommendation-summary panel"><div><small>{ar ? "الخطة المقترحة — أفضل 3" : "Suggested mix — top 3"}</small><strong>{mixTotal.toLocaleString()} SAR</strong></div><div><small>{ar ? "من ميزانية" : "of budget"}</small><strong>{budget.toLocaleString()} SAR</strong></div><div><small>{ar ? "المتبقي" : "Remaining"}</small><strong>{Math.max(0,budget-mixTotal).toLocaleString()} SAR</strong></div></div>}
       {narrative && <div className="ai-note panel"><Sparkles/><div><strong>{ar?"تفسير AI":"AI narrative"}</strong><p>{narrative}</p></div></div>}
-      <div className="opportunity-grid">{results.map((result)=><div key={result.opportunity.id} className="match-wrap"><OpportunityCard locale={locale} item={result.opportunity} score={result.score}/><div className="match-reasons">{(ar?result.reasonsAr:result.reasonsEn).slice(0,3).map((x)=><span key={x}>• {x}</span>)}</div></div>)}</div>
+      <div className="opportunity-grid">{suggestedMix.map((result)=><div key={result.opportunity.id} className="match-wrap"><OpportunityCard locale={locale} item={result.opportunity} score={result.score}/><div className="match-reasons">{(ar?result.reasonsAr:result.reasonsEn).slice(0,3).map((x)=><span key={x}>• {x}</span>)}</div></div>)}</div>
     </section>
   </div>;
 }
