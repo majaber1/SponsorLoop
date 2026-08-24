@@ -3,9 +3,10 @@ import { Pool, type QueryResultRow } from "pg";
 const globalForDb = globalThis as unknown as { sponsorLoopPool?: Pool };
 
 export const databaseEnabled = Boolean(process.env.DATABASE_URL);
+const connectionString = process.env.DATABASE_URL?.replace("sslmode=require", "sslmode=verify-full");
 
 export const pool = databaseEnabled
-  ? globalForDb.sponsorLoopPool ?? new Pool({ connectionString: process.env.DATABASE_URL, max: 10 })
+  ? globalForDb.sponsorLoopPool ?? new Pool({ connectionString, max: 10 })
   : null;
 
 if (process.env.NODE_ENV !== "production" && pool) globalForDb.sponsorLoopPool = pool;
