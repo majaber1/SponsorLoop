@@ -238,61 +238,79 @@ export async function authenticate(email: string, password: string): Promise<Ses
   return { id: user.id, email: user.email, name: user.display_name, locale: user.locale, role: user.role, organizationId: user.organization_id, organizationName: user.organization_name };
 }
 
-export async function listNotifications() {
+export async function listNotifications(userId?: string) {
   if (!databaseEnabled) return demoState.notifications;
-  return [];
+  if (!userId) return [];
+  const result = await query<any>(`SELECT id,type,title_ar,title_en,body_ar,body_en,is_read,created_at,link FROM notifications WHERE user_id=$1 ORDER BY created_at DESC LIMIT 50`, [userId]);
+  return result.rows.map((row:any)=>({ id:row.id,type:row.type,titleAr:row.title_ar,titleEn:row.title_en,bodyAr:row.body_ar,bodyEn:row.body_en,read:row.is_read,createdAt:row.created_at,link:row.link ?? undefined }));
 }
 
-export async function markNotificationRead(id: string) {
+export async function markNotificationRead(id: string, userId?: string) {
   if (!databaseEnabled) {
     const n = demoState.notifications.find((x) => x.id === id);
     if (n) n.read = true;
     return n ?? null;
   }
-  return null;
+  if (!userId) return null;
+  const result = await query<any>("UPDATE notifications SET is_read=true WHERE id=$1 AND user_id=$2 RETURNING id", [id,userId]);
+  return result.rows[0] ?? null;
 }
 
-export async function listDealMessages(dealId: string) {
+export async function listDealMessages(dealId: string, actorOrgId?: string, isAdmin=false) {
   if (!databaseEnabled) return demoState.messages.filter((x) => x.dealId === dealId);
-  return [];
+  if (!actorOrgId && !isAdmin) return [];
+  const result = await query<any>(`SELECT m.* FROM deal_messages m JOIN deals d ON d.id=m.deal_id WHERE m.deal_id=$1 AND ($3::boolean OR d.buyer_org_id=$2 OR d.seller_org_id=$2) ORDER BY m.created_at`,[dealId,actorOrgId ?? null,isAdmin]);
+  return result.rows.map((row:any)=>({id:row.id,dealId:row.deal_id,senderName:row.sender_name,senderRole:row.sender_role,message:row.message,createdAt:row.created_at}));
 }
 
-export async function addDealMessage(input: { dealId: string; senderName: string; senderRole: "buyer" | "seller" | "system"; message: string }) {
+export async function addDealMessage(input: { dealId: string; senderName: string; senderRole: "buyer" | "seller" | "system"; message: string; senderUserId?: string; actorOrgId?: string; isAdmin?: boolean }) {
   if (!databaseEnabled) {
     const msg = { ...input, id: `msg-${Date.now()}`, createdAt: new Date().toISOString() };
     demoState.messages.unshift(msg);
     return msg;
   }
-  return null;
+  if (!input.senderUserId || (!input.actorOrgId && !input.isAdmin)) return null;
+  const allowed = await query<any>(`SELECT id FROM deals WHERE id=$1 AND ($3::boolean OR buyer_org_id=$2 OR seller_org_id=$2)`,[input.dealId,input.actorOrgId ?? null,Boolean(input.isAdmin)]);
+  if (!allowed.rows[0]) return null;
+  const result = await query<any>(`INSERT INTO deal_messages (deal_id,sender_user_id,sender_name,sender_role,message) VALUES ($1,$2,$3,$4,$5) RETURNING *`,[input.dealId,input.senderUserId,input.senderName,input.senderRole,input.message]);
+  const row=result.rows[0]; return {id:row.id,dealId:row.deal_id,senderName:row.sender_name,senderRole:row.sender_role,message:row.message,createdAt:row.created_at};
 }
 
-export async function listReviews(dealId?: string) {
+export async function listReviews(dealId?: string, actorOrgId?: string, isAdmin=false) {
   if (!databaseEnabled) return dealId ? demoState.reviews.filter((x) => x.dealId === dealId) : demoState.reviews;
-  return [];
+  if (!actorOrgId && !isAdmin) return [];
+  const result = await query<any>(`SELECT r.* FROM reviews r JOIN deals d ON d.id=r.deal_id WHERE ($1::uuid IS NULL OR r.deal_id=$1) AND ($3::boolean OR d.buyer_org_id=$2 OR d.seller_org_id=$2) ORDER BY r.created_at DESC`,[dealId ?? null,actorOrgId ?? null,isAdmin]);
+  return result.rows.map((row:any)=>({id:row.id,dealId:row.deal_id,rating:row.rating,comment:row.comment,reviewerName:row.reviewer_name,createdAt:row.created_at}));
 }
 
-export async function addReview(input: { dealId: string; rating: number; comment: string; reviewerName: string }) {
+export async function addReview(input: { dealId: string; rating: number; comment: string; reviewerName: string; reviewerUserId?: string; actorOrgId?: string; isAdmin?: boolean }) {
   if (!databaseEnabled) {
     const rev = { ...input, id: `rev-${Date.now()}`, createdAt: new Date().toISOString() };
     demoState.reviews.push(rev);
     return rev;
   }
-  return null;
+  if (!input.reviewerUserId || (!input.actorOrgId && !input.isAdmin)) return null;
+  const result = await query<any>(`INSERT INTO reviews (deal_id,reviewer_user_id,reviewer_name,rating,comment) SELECT d.id,$2,$3,$4,$5 FROM deals d WHERE d.id=$1 AND ($7::boolean OR d.buyer_org_id=$6 OR d.seller_org_id=$6) AND d.stage='completed' ON CONFLICT (deal_id,reviewer_user_id) DO UPDATE SET rating=EXCLUDED.rating,comment=EXCLUDED.comment,created_at=now() RETURNING *`,[input.dealId,input.reviewerUserId,input.reviewerName,input.rating,input.comment,input.actorOrgId ?? null,Boolean(input.isAdmin)]);
+  const row=result.rows[0]; return row?{id:row.id,dealId:row.deal_id,rating:row.rating,comment:row.comment,reviewerName:row.reviewer_name,createdAt:row.created_at}:null;
 }
 
-export async function getFavorites() {
+export async function getFavorites(userId?: string) {
   if (!databaseEnabled) return demoState.favorites;
-  return [];
+  if (!userId) return [];
+  const result=await query<any>("SELECT opportunity_id FROM favorites WHERE user_id=$1 ORDER BY created_at DESC",[userId]); return result.rows.map((r:any)=>r.opportunity_id);
 }
 
-export async function toggleFavorite(opportunityId: string) {
+export async function toggleFavorite(opportunityId: string, userId?: string) {
   if (!databaseEnabled) {
     const idx = demoState.favorites.indexOf(opportunityId);
     if (idx >= 0) demoState.favorites.splice(idx, 1);
     else demoState.favorites.push(opportunityId);
     return demoState.favorites;
   }
-  return [];
+  if (!userId) return [];
+  const existing=await query<any>("DELETE FROM favorites WHERE user_id=$1 AND opportunity_id=$2 RETURNING opportunity_id",[userId,opportunityId]);
+  if (!existing.rows[0]) await query("INSERT INTO favorites (user_id,opportunity_id) VALUES ($1,$2)",[userId,opportunityId]);
+  return getFavorites(userId);
 }
 
 export async function listSponsorshipRequests(filters?: { category?: string; city?: string }): Promise<SponsorshipRequest[]> {
@@ -302,7 +320,11 @@ export async function listSponsorshipRequests(filters?: { category?: string; cit
     if (filters?.city && filters.city !== "all") data = data.filter((x) => x.city.toLowerCase() === filters.city!.toLowerCase());
     return data;
   }
-  return [];
+  const values:unknown[]=[]; const where=["status='open'"];
+  if(filters?.category&&filters.category!=="all"){values.push(filters.category);where.push(`category=$${values.length}`)}
+  if(filters?.city&&filters.city!=="all"){values.push(filters.city);where.push(`LOWER(city)=LOWER($${values.length})`)}
+  const result=await query<any>(`SELECT * FROM sponsorship_requests WHERE ${where.join(" AND ")} ORDER BY created_at DESC`,values);
+  return result.rows.map((row:any)=>({id:row.id,organizationNameAr:row.organization_name_ar,organizationNameEn:row.organization_name_en,category:row.category,titleAr:row.title_ar,titleEn:row.title_en,descriptionAr:row.description_ar,descriptionEn:row.description_en,city:row.city,budgetRange:row.budget_range,audienceSize:Number(row.audience_size),status:row.status,createdAt:row.created_at}));
 }
 
 export async function createSponsorshipRequest(input: {
@@ -316,6 +338,7 @@ export async function createSponsorshipRequest(input: {
   city: string;
   budgetRange: string;
   audienceSize: number;
+  organizationId?: string;
 }): Promise<SponsorshipRequest> {
   const request: SponsorshipRequest = {
     ...input,
@@ -325,6 +348,9 @@ export async function createSponsorshipRequest(input: {
   };
   if (!databaseEnabled) {
     demoState.sponsorshipRequests.unshift(request);
+  } else {
+    const result=await query<any>(`INSERT INTO sponsorship_requests (organization_id,organization_name_ar,organization_name_en,category,title_ar,title_en,description_ar,description_en,city,budget_range,audience_size) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,[input.organizationId ?? null,input.organizationNameAr,input.organizationNameEn,input.category,input.titleAr,input.titleEn,input.descriptionAr,input.descriptionEn,input.city,input.budgetRange,input.audienceSize]);
+    const row=result.rows[0]; return {id:row.id,organizationNameAr:row.organization_name_ar,organizationNameEn:row.organization_name_en,category:row.category,titleAr:row.title_ar,titleEn:row.title_en,descriptionAr:row.description_ar,descriptionEn:row.description_en,city:row.city,budgetRange:row.budget_range,audienceSize:Number(row.audience_size),status:row.status,createdAt:row.created_at};
   }
   return request;
 }
