@@ -84,3 +84,5 @@ If `AI_PROVIDER_URL`, `AI_PROVIDER_API_KEY` and `AI_MODEL` are configured, the L
 ## Production deployment
 
 See `docs/DEPLOYMENT.md`. A Vercel deployment can host the Next.js app, but durable operation additionally requires PostgreSQL. Object storage, payment and e-sign are explicit external integrations and V2 reports them separately.
+
+Production environment activation checkpoint: 2026-08-25 (PostgreSQL and signed sessions).
