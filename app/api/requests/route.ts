@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { listSponsorshipRequests, createSponsorshipRequest } from "@/lib/repository";
+import { getSession } from "@/lib/session";
+import { databaseEnabled } from "@/lib/db";
 
 export async function GET() {
   const data = await listSponsorshipRequests();
@@ -7,6 +9,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const user=await getSession(); if(databaseEnabled&&!user) return NextResponse.json({error:"Authentication required"},{status:401});
   const body = await req.json();
   const { organizationNameAr, organizationNameEn, titleAr, titleEn, descriptionAr, descriptionEn, category, city, budgetRange, audienceSize } = body;
   if (!titleAr || !titleEn || !organizationNameEn) {
@@ -22,7 +25,8 @@ export async function POST(req: Request) {
     descriptionEn: descriptionEn || "",
     city: city || "Riyadh",
     budgetRange: budgetRange || "10K–50K SAR",
-    audienceSize: Number(audienceSize) || 10000
+    audienceSize: Number(audienceSize) || 10000,
+    organizationId:user?.organizationId
   });
   return NextResponse.json({ data }, { status: 201 });
 }
