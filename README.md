@@ -79,10 +79,8 @@ The ranking is deterministic first. Weights:
 - Availability: 5%
 - Brand safety / verified state: 5%
 
-If `AI_PROVIDER_URL`, `AI_PROVIDER_API_KEY` and `AI_MODEL` are configured, the LLM may explain/re-rank the supplied candidates but is instructed not to invent inventory, pricing, reach or metrics.
+Set `OPENAI_API_KEY` as a server-only secret and optionally set `OPENAI_MODEL` (defaults to `gpt-5.4-mini`). Authenticated users receive a bilingual ChatGPT explanation of the deterministic ranking and can create an AI-assisted proposal draft in the deal room. OpenAI is never allowed to invent inventory, pricing, reach or metrics, and every generated proposal is labelled for human review.
 
 ## Production deployment
 
 See `docs/DEPLOYMENT.md`. A Vercel deployment can host the Next.js app, but durable operation additionally requires PostgreSQL. Object storage, payment and e-sign are explicit external integrations and V2 reports them separately.
-
-Production environment activation checkpoint: 2026-08-25 (PostgreSQL and signed sessions).

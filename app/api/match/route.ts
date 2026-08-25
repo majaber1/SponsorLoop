@@ -2,33 +2,31 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { listOpportunities } from "@/lib/repository";
 import { matchOpportunities } from "@/lib/matching";
+import { generateStructured } from "@/lib/openai";
+import { getSession } from "@/lib/session";
 
 const schema = z.object({
   title: z.string().default("Campaign"),
   objective: z.string().default("awareness"),
   budget: z.number().positive(),
   city: z.string().optional(),
-  categories: z.array(z.enum(["events", "creators", "podcasts", "sports", "digital", "ooh", "community", "gaming"])).optional(),
+  categories: z.array(z.enum(["events", "creators", "podcasts", "sports", "digital", "ooh", "community", "gaming", "athletes", "hackathons", "clubs"])).optional(),
   audience: z.array(z.string()).optional()
 });
 
-async function explainWithProvider(payload: unknown) {
-  const url = process.env.AI_PROVIDER_URL;
-  const key = process.env.AI_PROVIDER_API_KEY;
-  const model = process.env.AI_MODEL;
-  if (!url || !key || !model) return null;
+async function explainWithOpenAI(payload: unknown) {
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model, temperature: 0.2, messages: [
-        { role: "system", content: "You are SponsorLoop's sponsorship analyst. Do not invent opportunities, prices, reach or metrics. Explain only the supplied deterministic matches in concise Arabic and English." },
-        { role: "user", content: JSON.stringify(payload) }
-      ] })
+    return await generateStructured<{ summaryAr: string; summaryEn: string }>({
+      name: "sponsor_match_explanation",
+      instructions: "You are SponsorLoop's sponsorship analyst for the Saudi market. Explain only the supplied deterministic match results. Never invent opportunities, prices, reach, metrics, approvals, or legal conclusions. Be concise and actionable in both Arabic and English.",
+      input: payload,
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        properties: { summaryAr: { type: "string" }, summaryEn: { type: "string" } },
+        required: ["summaryAr", "summaryEn"]
+      }
     });
-    if (!response.ok) return null;
-    const json = await response.json();
-    return json?.choices?.[0]?.message?.content ?? null;
   } catch {
     return null;
   }
@@ -39,6 +37,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid matching request" }, { status: 400 });
   const opportunities = await listOpportunities();
   const matches = matchOpportunities(parsed.data, opportunities).slice(0, 8);
-  const aiNarrative = await explainWithProvider({ campaign: parsed.data, matches: matches.slice(0, 5).map((m) => ({ id: m.opportunity.id, score: m.score, title: m.opportunity.titleEn, reasons: m.reasonsEn })) });
-  return NextResponse.json({ data: matches, mode: aiNarrative ? "deterministic+ai" : "deterministic", aiNarrative });
+  const session = await getSession();
+  const ai = session ? await explainWithOpenAI({ campaign: parsed.data, matches: matches.slice(0, 5).map((m) => ({ id: m.opportunity.id, score: m.score, titleAr: m.opportunity.titleAr, titleEn: m.opportunity.titleEn, startingPrice: m.opportunity.startingPrice, reasonsAr: m.reasonsAr, reasonsEn: m.reasonsEn })) }) : null;
+  return NextResponse.json({ data: matches, mode: ai ? "deterministic+openai" : "deterministic", aiNarrative: ai?.data ?? null, aiModel: ai?.model ?? null });
 }

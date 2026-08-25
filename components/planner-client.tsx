@@ -23,7 +23,7 @@ export function PlannerClient({ locale, initialBudget = 50000, initialObjective 
   const [categories,setCategories] = useState<OpportunityCategory[]>([]);
   const [results,setResults] = useState<MatchResult[]>([]);
   const [mode,setMode] = useState("");
-  const [narrative,setNarrative] = useState<string | null>(null);
+  const [narrative,setNarrative] = useState<{summaryAr:string;summaryEn:string} | null>(null);
   const [loading,setLoading] = useState(false);
 
   const run = async () => {
@@ -55,9 +55,9 @@ export function PlannerClient({ locale, initialBudget = 50000, initialObjective 
       <button className="button button-primary full" onClick={run} disabled={loading}><Sparkles size={18}/>{loading ? (ar?"أحلل الفرص...":"Analyzing...") : (ar?"أعد بناء الخطة":"Rebuild plan")}</button>
     </aside>
     <section className="planner-results">
-      <div className="results-head"><div><span className="eyebrow">SponsorLoop AI</span><h1>{ar ? "أفضل الفرص لهذه الحملة" : "Best opportunities for this campaign"}</h1><p>{ar ? "الترتيب مبني على ملاءمة الجمهور والهدف والميزانية والموقع والثقة والأداء والتوافر." : "Ranking combines audience, objective, budget, geography, trust, performance and availability."}</p></div><span className="mode-pill">{mode === "deterministic+ai" ? "Scoring + AI" : ar ? "تقييم قابل للتفسير" : "Explainable scoring"}</span></div>
+      <div className="results-head"><div><span className="eyebrow">SponsorLoop AI</span><h1>{ar ? "أفضل الفرص لهذه الحملة" : "Best opportunities for this campaign"}</h1><p>{ar ? "الترتيب مبني على ملاءمة الجمهور والهدف والميزانية والموقع والثقة والأداء والتوافر." : "Ranking combines audience, objective, budget, geography, trust, performance and availability."}</p></div><span className="mode-pill">{mode === "deterministic+openai" ? "Scoring + OpenAI" : ar ? "تقييم قابل للتفسير" : "Explainable scoring"}</span></div>
       {results.length>0 && <div className="recommendation-summary panel"><div><small>{ar ? "الخطة المقترحة — أفضل 3" : "Suggested mix — top 3"}</small><strong>{mixTotal.toLocaleString()} SAR</strong></div><div><small>{ar ? "من ميزانية" : "of budget"}</small><strong>{budget.toLocaleString()} SAR</strong></div><div><small>{ar ? "المتبقي" : "Remaining"}</small><strong>{Math.max(0,budget-mixTotal).toLocaleString()} SAR</strong></div></div>}
-      {narrative && <div className="ai-note panel"><Sparkles/><div><strong>{ar?"تفسير AI":"AI narrative"}</strong><p>{narrative}</p></div></div>}
+      {narrative && <div className="ai-note panel"><Sparkles/><div><strong>{ar?"تفسير ChatGPT":"ChatGPT explanation"}</strong><p>{ar?narrative.summaryAr:narrative.summaryEn}</p></div></div>}
       <div className="opportunity-grid">{suggestedMix.map((result)=><div key={result.opportunity.id} className="match-wrap"><OpportunityCard locale={locale} item={result.opportunity} score={result.score}/><div className="match-reasons">{(ar?result.reasonsAr:result.reasonsEn).slice(0,3).map((x)=><span key={x}>• {x}</span>)}</div></div>)}</div>
     </section>
   </div>;
