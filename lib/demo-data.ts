@@ -536,7 +536,7 @@ export const demoDeals: Deal[] = [
     counterparty: "University Innovation Community",
     amount: 18000,
     currency: "SAR",
-    stage: "approval",
+    stage: "internal_approval",
     updatedAt: "2026-08-13T08:15:00Z"
   },
   {
@@ -549,7 +549,7 @@ export const demoDeals: Deal[] = [
     counterparty: "TechReview Arabia",
     amount: 15000,
     currency: "SAR",
-    stage: "contract",
+    stage: "contract_draft",
     updatedAt: "2026-08-12T14:00:00Z"
   },
   {
@@ -561,7 +561,7 @@ export const demoDeals: Deal[] = [
     counterparty: "Jeddah Food Festival",
     amount: 120000,
     currency: "SAR",
-    stage: "payment",
+    stage: "funding_pending",
     updatedAt: "2026-08-10T09:45:00Z"
   },
   {

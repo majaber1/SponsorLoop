@@ -16,7 +16,7 @@ export default async function AnalyticsPage({ params }: { params: Promise<{ loca
   const avgDealSize = deals.length ? Math.round(totalPipeline / deals.length) : 0;
   const conversionRate = deals.length ? Math.round((deals.filter((d) => d.stage === "completed").length / deals.length) * 100) : 0;
 
-  const stageData = ["request", "negotiation", "approval", "contract", "payment", "delivery", "completed"] as const;
+  const stageData = ["inquiry", "negotiation", "internal_approval", "contract_draft", "funding_pending", "live", "completed"] as const;
   const stageCounts = stageData.map((s) => ({ stage: s, count: deals.filter((d) => d.stage === s).length }));
 
   const categoryBreakdown = ["events", "creators", "podcasts", "sports", "digital", "ooh", "community", "gaming"] as const;

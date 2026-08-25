@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS deals (
   opportunity_id uuid NOT NULL REFERENCES opportunities(id),
   buyer_org_id uuid NOT NULL REFERENCES organizations(id),
   seller_org_id uuid NOT NULL REFERENCES organizations(id),
-  stage text NOT NULL DEFAULT 'request' CHECK (stage IN ('request','negotiation','approval','contract','payment','delivery','completed')),
+  stage text NOT NULL DEFAULT 'inquiry' CHECK (stage IN ('inquiry','offer_submitted','rights_holder_review','negotiation','internal_approval','contract_draft','seller_approved','buyer_approved','signature_pending','signed','funding_pending','funded','activation_planning','creative_review','live','evidence_submitted','milestone_approved','settlement_pending','settled','performance_reporting','completed')),
   agreed_amount numeric(14,2),
   currency char(3) NOT NULL DEFAULT 'SAR',
   created_at timestamptz NOT NULL DEFAULT now(),

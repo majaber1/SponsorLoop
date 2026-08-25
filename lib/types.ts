@@ -140,12 +140,26 @@ export type SuccessStory = {
 };
 
 export type DealStage =
-  | "request"
+  | "inquiry"
+  | "offer_submitted"
+  | "rights_holder_review"
   | "negotiation"
-  | "approval"
-  | "contract"
-  | "payment"
-  | "delivery"
+  | "internal_approval"
+  | "contract_draft"
+  | "seller_approved"
+  | "buyer_approved"
+  | "signature_pending"
+  | "signed"
+  | "funding_pending"
+  | "funded"
+  | "activation_planning"
+  | "creative_review"
+  | "live"
+  | "evidence_submitted"
+  | "milestone_approved"
+  | "settlement_pending"
+  | "settled"
+  | "performance_reporting"
   | "completed";
 
 export type Deal = {

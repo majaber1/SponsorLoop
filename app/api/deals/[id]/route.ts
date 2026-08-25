@@ -3,7 +3,7 @@ import { z } from "zod";
 import { updateDealStage } from "@/lib/repository";
 import { getSession } from "@/lib/session";
 import { databaseEnabled } from "@/lib/db";
-const schema = z.object({ stage: z.enum(["request", "negotiation", "approval", "contract", "payment", "delivery", "completed"]) });
+const schema = z.object({ stage: z.enum(["inquiry","offer_submitted","rights_holder_review","negotiation","internal_approval","contract_draft","seller_approved","buyer_approved","signature_pending","signed","funding_pending","funded","activation_planning","creative_review","live","evidence_submitted","milestone_approved","settlement_pending","settled","performance_reporting","completed"]) });
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const user = await getSession();
   if (databaseEnabled && !user) return NextResponse.json({ error: "Authentication required" }, { status: 401 });

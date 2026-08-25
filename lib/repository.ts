@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { databaseEnabled, pool, query } from "./db";
 import { demoState } from "./demo-store";
 import type { CampaignInput, Deal, DealStage, Opportunity, OpportunityCategory, SessionUser, SponsorshipRequest } from "./types";
+import { ensureOperations } from "./operations";
 
 function rowToOpportunity(row: any): Opportunity {
   return {
@@ -191,16 +192,17 @@ export async function createDeal(input: { opportunityId: string; campaignId?: st
       counterparty: opportunity.organizationNameEn,
       amount: input.amount ?? opportunity.startingPrice,
       currency: "SAR",
-      stage: "request",
+      stage: "inquiry",
       updatedAt: new Date().toISOString()
     };
     demoState.deals.unshift(deal);
     return deal;
   }
   if (!input.buyerOrgId) throw new Error("buyerOrgId is required");
+  await ensureOperations();
   const result = await query<any>(`
     INSERT INTO deals (campaign_id,opportunity_id,buyer_org_id,seller_org_id,stage,agreed_amount)
-    VALUES ($1,$2,$3,$4,'request',$5) RETURNING *
+    VALUES ($1,$2,$3,$4,'inquiry',$5) RETURNING *
   `, [input.campaignId ?? null, input.opportunityId, input.buyerOrgId, opportunity.organizationId, input.amount ?? opportunity.startingPrice]);
   return result.rows[0];
 }
@@ -214,6 +216,7 @@ export async function updateDealStage(id: string, stage: DealStage, actorOrgId?:
     return deal;
   }
   if (!actorOrgId && !isAdmin) return null;
+  await ensureOperations();
   const result = isAdmin
     ? await query<any>("UPDATE deals SET stage=$2,updated_at=now() WHERE id=$1 RETURNING *", [id, stage])
     : await query<any>("UPDATE deals SET stage=$2,updated_at=now() WHERE id=$1 AND (buyer_org_id=$3 OR seller_org_id=$3) RETURNING *", [id, stage, actorOrgId]);
