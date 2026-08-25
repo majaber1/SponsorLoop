@@ -217,6 +217,19 @@ export async function updateDealStage(id: string, stage: DealStage, actorOrgId?:
   }
   if (!actorOrgId && !isAdmin) return null;
   await ensureOperations();
+  if (stage === "signed") {
+    const signed = await query<any>("SELECT id FROM deal_contracts WHERE deal_id=$1 AND status='signed' AND signature_reference IS NOT NULL", [id]);
+    if (!signed.rows[0]) return null;
+  }
+  if (["funded", "settled"].includes(stage)) {
+    if (!process.env.PSP_PROVIDER) return null;
+    const paid = await query<any>("SELECT id FROM deal_payments WHERE deal_id=$1 AND status='verified' LIMIT 1", [id]);
+    if (!paid.rows[0]) return null;
+  }
+  if (stage === "completed") {
+    const open = await query<any>("SELECT id FROM deal_disputes WHERE deal_id=$1 AND status='open' LIMIT 1", [id]);
+    if (open.rows[0]) return null;
+  }
   const result = isAdmin
     ? await query<any>("UPDATE deals SET stage=$2,updated_at=now() WHERE id=$1 RETURNING *", [id, stage])
     : await query<any>("UPDATE deals SET stage=$2,updated_at=now() WHERE id=$1 AND (buyer_org_id=$3 OR seller_org_id=$3) RETURNING *", [id, stage, actorOrgId]);
