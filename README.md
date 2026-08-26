@@ -6,6 +6,26 @@ Saudi-first bilingual sponsorship and advertising marketplace. V2 upgrades the i
 
 **Enhanced with features from top international platforms** (SponsorUnited, OpenSponsorship, Sponsorium, DoSponsor).
 
+## Operational source of truth
+
+Last verified: **2026-08-26**.
+
+| Layer | Canonical source | Current verified state |
+| --- | --- | --- |
+| Code | `main` in this repository | Active Next.js application |
+| Production | `https://sponsorloop-gold.vercel.app` | Deployed |
+| Health | `GET /api/health` | DB connected; AI deterministic fallback when OpenAI is absent |
+| Database | `DATABASE_URL` | PostgreSQL supported and health-reported |
+| Object storage | Cloudflare R2 via `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Code ready; production health currently reports `not_configured` until all four variables are present |
+| AI | `OPENAI_API_KEY` + optional `OPENAI_MODEL` | Optional; deterministic ranking remains the base behavior |
+| Payments | Provider boundary | Not configured unless health says otherwise |
+| E-sign | Provider boundary | Not configured unless health says otherwise |
+| Architecture | `docs/ARCHITECTURE.md` | Canonical architecture document |
+
+**Runtime health overrides prose.** If this README, an old QA report, or the dashboard disagrees with `/api/health` or current `main`, treat the live health response and current code as authoritative and update the documentation.
+
+Machine-readable portfolio metadata is in `.jaber-dashboard.json` for Jaber Dashboard synchronization.
+
 ## What works
 
 - Arabic and English routes (`/ar`, `/en`) with real RTL/LTR
@@ -28,6 +48,7 @@ Saudi-first bilingual sponsorship and advertising marketplace. V2 upgrades the i
 - Email/password auth with signed HttpOnly session cookie
 - Demo mode with no database required (5 demo deals at various stages)
 - PostgreSQL production mode through `DATABASE_URL`
+- Cloudflare R2 upload implementation through the four `R2_*` variables
 - Health endpoint showing DB / AI / storage / payments / e-sign status
 
 ## Visual preview without dependencies
@@ -64,7 +85,7 @@ When `DATABASE_URL` is empty, the app uses in-process demo data. This is intenti
 
 `GET /api/health`
 
-The endpoint never fakes external integrations. It reports `not_configured` for storage, payments and e-sign until their environment variables are actually set.
+The endpoint is the operational truth for configured dependencies. It reports `not_configured` for Cloudflare R2, payments and e-sign until their required environment variables are actually set. It does not expose secret values.
 
 ## AI matching
 
@@ -83,4 +104,4 @@ Set `OPENAI_API_KEY` as a server-only secret and optionally set `OPENAI_MODEL` (
 
 ## Production deployment
 
-See `docs/DEPLOYMENT.md`. A Vercel deployment can host the Next.js app, but durable operation additionally requires PostgreSQL. Object storage, payment and e-sign are explicit external integrations and V2 reports them separately.
+See `docs/DEPLOYMENT.md`. A Vercel deployment can host the Next.js app, but durable operation additionally requires PostgreSQL. Media/document uploads use Cloudflare R2 when the four `R2_*` production variables are present. Payment and e-sign remain explicit external integrations and are reported separately by health.
