@@ -8,7 +8,7 @@ Saudi-first bilingual sponsorship and advertising marketplace. V2 upgrades the i
 
 ## Operational source of truth
 
-Last verified: **2026-08-26**.
+Last verified: **2026-08-27**.
 
 | Layer | Canonical source | Current verified state |
 | --- | --- | --- |
@@ -16,13 +16,14 @@ Last verified: **2026-08-26**.
 | Production | `https://sponsorloop-gold.vercel.app` | Deployed |
 | Health | `GET /api/health` | DB connected; AI deterministic fallback when OpenAI is absent |
 | Database | `DATABASE_URL` | PostgreSQL supported and health-reported |
-| Object storage | Cloudflare R2 via `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Code ready; production health currently reports `not_configured` until all four variables are present |
+| Object storage | Cloudflare R2 via `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | Code ready; production health reports readiness truthfully |
 | AI | `OPENAI_API_KEY` + optional `OPENAI_MODEL` | Optional; deterministic ranking remains the base behavior |
+| Growth Engine | `/[locale]/admin/growth` | Admin acquisition/matching control plane; official TikTok connectors remain gated until credentials/approval exist |
 | Payments | Provider boundary | Not configured unless health says otherwise |
 | E-sign | Provider boundary | Not configured unless health says otherwise |
-| Architecture | `docs/ARCHITECTURE.md` | Canonical architecture document |
+| Architecture | `docs/ARCHITECTURE.md` + `docs/GROWTH_ENGINE.md` | Canonical architecture documents |
 
-**Runtime health overrides prose.** If this README, an old QA report, or the dashboard disagrees with `/api/health` or current `main`, treat the live health response and current code as authoritative and update the documentation.
+**Runtime health overrides prose.** If this README, an old QA report, or the dashboard disagrees with `/api/health` or current `main`, treat live health and current code as authoritative and update the documentation.
 
 Machine-readable portfolio metadata is in `.jaber-dashboard.json` for Jaber Dashboard synchronization.
 
@@ -30,26 +31,43 @@ Machine-readable portfolio metadata is in `.jaber-dashboard.json` for Jaber Dash
 
 - Arabic and English routes (`/ar`, `/en`) with real RTL/LTR
 - Marketplace with sort, filter, grid/list views, and featured badges
-- 17 demo opportunities across 7 Saudi cities (Riyadh, Jeddah, Dammam, Makkah, Madinah, Khobar, Tabuk)
 - Opportunity detail and sell-side listing flow
-- Side-by-side opportunity comparison tool (up to 3)
+- Side-by-side opportunity comparison tool
 - Campaign creation flow
 - Explainable AI Planner / matching API
-- Advertiser dashboard
-- Rights-holder dashboard
-- Analytics dashboard with pipeline charts, category breakdown, geographic distribution, quality metrics
-- Deals list + staged Deal Room with in-deal messaging/activity timeline
-- In-app notification system with bell icon and dropdown
-- Favorites/bookmarks API
-- Post-deal review/rating system
+- Advertiser and rights-holder dashboards
+- Analytics dashboard
+- Deals + staged Deal Room
+- Notifications, favorites and reviews
 - Admin / verification queue
-- Pricing model
 - Trust & compliance center
 - Email/password auth with signed HttpOnly session cookie
-- Demo mode with no database required (5 demo deals at various stages)
+- Demo mode with no database required
 - PostgreSQL production mode through `DATABASE_URL`
-- Cloudflare R2 upload implementation through the four `R2_*` variables
+- Cloudflare R2 upload implementation
 - Health endpoint showing DB / AI / storage / payments / e-sign status
+- **Admin Growth Engine** for creator/brand lead intake, qualification, outreach drafting, Mawthooq tracking, acquisition funnel and budget-aware creator-brand matching
+
+## Growth Engine
+
+Admin route:
+
+```text
+/ar/admin/growth
+/en/admin/growth
+```
+
+The Growth Engine contains five operating agents:
+
+1. **Creator Scout** — discover/rank creator prospects.
+2. **Brand Scout** — qualify sponsor demand and declared budgets.
+3. **Outreach Copilot** — draft bilingual outreach; human approval is required before external sending.
+4. **Matchmaker** — pair creators and sponsors using budget, category, audience, geography and compliance fit.
+5. **Compliance Gate** — record Mawthooq verification/evidence before Saudi creator activation.
+
+The product does **not** implement blind TikTok scraping or mass unsolicited messaging. The preferred integration is TikTok One / TikTok API for Business / Business Messaging after SponsorLoop receives the relevant platform access. Until then, intake can be manual/CSV/referral and the same matching/outreach workflow remains usable.
+
+See [`docs/GROWTH_ENGINE.md`](docs/GROWTH_ENGINE.md) for architecture, connector rules and the acquisition funnel.
 
 ## Visual preview without dependencies
 
@@ -81,27 +99,18 @@ When `DATABASE_URL` is empty, the app uses in-process demo data. This is intenti
 5. Restart the app.
 6. Create the first durable account from `/ar/auth/sign-up`.
 
+Growth Engine tables are created safely on first admin Growth Engine access through `ensureGrowthEngine()`.
+
 ## Health
 
 `GET /api/health`
 
-The endpoint is the operational truth for configured dependencies. It reports `not_configured` for Cloudflare R2, payments and e-sign until their required environment variables are actually set. It does not expose secret values.
+The endpoint is the operational truth for configured dependencies. It reports `not_configured` for external integrations until their required environment variables are actually set. It does not expose secret values.
 
 ## AI matching
 
-The ranking is deterministic first. Weights:
-
-- Audience: 25%
-- Objective/channel: 20%
-- Budget/value: 15%
-- Geography: 10%
-- Trust: 10%
-- Historical performance: 10%
-- Availability: 5%
-- Brand safety / verified state: 5%
-
-Set `OPENAI_API_KEY` as a server-only secret and optionally set `OPENAI_MODEL` (defaults to `gpt-5.4-mini`). Authenticated users receive a bilingual ChatGPT explanation of the deterministic ranking and can create an AI-assisted proposal draft in the deal room. OpenAI is never allowed to invent inventory, pricing, reach or metrics, and every generated proposal is labelled for human review.
+The core opportunity ranking remains deterministic first. Set `OPENAI_API_KEY` as a server-only secret and optionally set `OPENAI_MODEL` (defaults to `gpt-5.4-mini`). OpenAI is never allowed to invent inventory, pricing, reach or metrics, and generated copy remains subject to human review.
 
 ## Production deployment
 
-See `docs/DEPLOYMENT.md`. A Vercel deployment can host the Next.js app, but durable operation additionally requires PostgreSQL. Media/document uploads use Cloudflare R2 when the four `R2_*` production variables are present. Payment and e-sign remain explicit external integrations and are reported separately by health.
+See `docs/DEPLOYMENT.md`. A Vercel deployment can host the Next.js app, but durable operation additionally requires PostgreSQL. Media/document uploads use Cloudflare R2 when the four `R2_*` production variables are present. Payment, e-sign and TikTok Business integrations remain explicit external integrations and are reported separately rather than simulated as connected.
