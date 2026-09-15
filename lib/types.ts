@@ -103,11 +103,59 @@ export type Review = {
 
 export type PackageTier = {
   id: string;
+  opportunityId: string;
   nameAr: string;
   nameEn: string;
   price: number;
-  reach: number;
-  perks: string[];
+  currency: "SAR";
+  quantity?: number;
+  entitlements: string[];
+  status: "available" | "sold_out" | "hidden";
+};
+
+export type OrganizationProfile = {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  orgType: string;
+  countryCode: string;
+  city: string;
+  verificationStatus: "pending" | "verified" | "rejected" | "suspended";
+  commercialRegistration?: string;
+  mawthooqLicense?: string;
+  bio?: string;
+  websiteUrl?: string;
+  logoUrl?: string;
+  opportunities: Opportunity[];
+  stats: {
+    totalOpportunities: number;
+    totalDeals: number;
+    avgRating: number;
+    totalReach: number;
+  };
+};
+
+export type UserSettings = {
+  displayName: string;
+  email: string;
+  locale: Locale;
+  organizationName: string;
+  notifyDeals: boolean;
+  notifyMatches: boolean;
+  notifySystem: boolean;
+};
+
+export type OnboardingStep = "role" | "organization" | "preferences" | "complete";
+
+export type CategoryInfo = {
+  slug: OpportunityCategory;
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string;
+  descriptionEn: string;
+  count: number;
+  totalReach: number;
+  avgPrice: number;
 };
 
 export type SponsorshipRequest = {

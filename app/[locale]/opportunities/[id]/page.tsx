@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StartDealButton } from "@/components/start-deal-button";
 import { ROICalculator } from "@/components/roi-calculator";
+import { PackageDisplay } from "@/components/package-manager";
 import { Check, Phone, Shield } from "@/components/icons";
 import { isLocale, localePath } from "@/lib/i18n";
-import { getOpportunity } from "@/lib/repository";
+import { getOpportunity, listPackages } from "@/lib/repository";
 
 export default async function OpportunityPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale: raw, id } = await params;
@@ -12,6 +13,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ lo
   const item = await getOpportunity(id);
   if (!item) notFound();
   const ar = raw === "ar";
+  const packages = await listPackages(id);
   const cpm = item.estimatedReach > 0 ? ((item.startingPrice / item.estimatedReach) * 1000).toFixed(1) : "—";
 
   return (
@@ -23,7 +25,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ lo
             <div className="cover-monogram large">{item.organizationNameEn.slice(0, 2).toUpperCase()}</div>
           </div>
           <div className="detail-owner">
-            <span>{ar ? item.organizationNameAr : item.organizationNameEn}</span>
+            <Link href={localePath(raw, `org/${item.organizationId}`)} className="text-link">{ar ? item.organizationNameAr : item.organizationNameEn}</Link>
             {item.verified && <b><Shield size={15} />{ar ? "موثّق" : "Verified"}</b>}
           </div>
           <h1>{ar ? item.titleAr : item.titleEn}</h1>
@@ -48,6 +50,8 @@ export default async function OpportunityPage({ params }: { params: Promise<{ lo
               <div><small>CPM</small><strong>{cpm} SAR</strong></div>
             </div>
           </div>
+
+          <PackageDisplay locale={raw} packages={packages} />
 
           <ROICalculator locale={raw} opportunity={item} />
         </div>

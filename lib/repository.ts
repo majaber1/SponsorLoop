@@ -2,8 +2,9 @@ import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { databaseEnabled, pool, query } from "./db";
 import { demoState } from "./demo-store";
-import type { CampaignInput, Deal, DealStage, Opportunity, OpportunityCategory, SessionUser, SponsorshipRequest } from "./types";
+import type { CampaignInput, CategoryInfo, Deal, DealStage, Opportunity, OpportunityCategory, OrganizationProfile, PackageTier, SessionUser, SponsorshipRequest, UserSettings } from "./types";
 import { ensureOperations } from "./operations";
+import { categoryMeta } from "./categories";
 
 function rowToOpportunity(row: any): Opportunity {
   return {
@@ -369,6 +370,198 @@ export async function createSponsorshipRequest(input: {
     const row=result.rows[0]; return {id:row.id,organizationNameAr:row.organization_name_ar,organizationNameEn:row.organization_name_en,category:row.category,titleAr:row.title_ar,titleEn:row.title_en,descriptionAr:row.description_ar,descriptionEn:row.description_en,city:row.city,budgetRange:row.budget_range,audienceSize:Number(row.audience_size),status:row.status,createdAt:row.created_at};
   }
   return request;
+}
+
+export async function getOrganizationProfile(id: string): Promise<OrganizationProfile | null> {
+  if (!databaseEnabled) {
+    const opps = demoState.opportunities.filter((x) => x.organizationId === id);
+    if (opps.length === 0) return null;
+    const first = opps[0];
+    const deals = demoState.deals.filter((x) => x.buyerOrgId === id || x.sellerOrgId === id);
+    const reviews = demoState.reviews;
+    const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
+    return {
+      id,
+      nameAr: first.organizationNameAr,
+      nameEn: first.organizationNameEn,
+      orgType: "rights_holder",
+      countryCode: "SA",
+      city: first.city,
+      verificationStatus: first.verified ? "verified" : "pending",
+      opportunities: opps,
+      stats: {
+        totalOpportunities: opps.length,
+        totalDeals: deals.length,
+        avgRating: Math.round(avgRating * 10) / 10,
+        totalReach: opps.reduce((s, o) => s + o.estimatedReach, 0)
+      }
+    };
+  }
+  const orgResult = await query<any>("SELECT * FROM organizations WHERE id=$1 LIMIT 1", [id]);
+  const org = orgResult.rows[0];
+  if (!org) return null;
+  const oppsResult = await query<any>(`
+    SELECT o.*, org.name_ar AS organization_name_ar, org.name_en AS organization_name_en
+    FROM opportunities o JOIN organizations org ON org.id = o.organization_id
+    WHERE o.organization_id=$1 AND o.status='published' ORDER BY o.featured DESC, o.created_at DESC
+  `, [id]);
+  const opps = oppsResult.rows.map(rowToOpportunity);
+  const dealsResult = await query<any>("SELECT COUNT(*) AS c FROM deals WHERE buyer_org_id=$1 OR seller_org_id=$1", [id]);
+  const reviewsResult = await query<any>(`
+    SELECT AVG(r.rating) AS avg_rating FROM reviews r
+    JOIN deals d ON d.id=r.deal_id WHERE d.buyer_org_id=$1 OR d.seller_org_id=$1
+  `, [id]);
+  return {
+    id: org.id,
+    nameAr: org.name_ar ?? org.name_en,
+    nameEn: org.name_en,
+    orgType: org.org_type,
+    countryCode: org.country_code,
+    city: org.city ?? "",
+    verificationStatus: org.verification_status,
+    commercialRegistration: org.commercial_registration ?? undefined,
+    mawthooqLicense: org.mawthooq_license ?? undefined,
+    opportunities: opps,
+    stats: {
+      totalOpportunities: opps.length,
+      totalDeals: Number(dealsResult.rows[0]?.c ?? 0),
+      avgRating: Math.round(Number(reviewsResult.rows[0]?.avg_rating ?? 0) * 10) / 10,
+      totalReach: opps.reduce((s, o) => s + o.estimatedReach, 0)
+    }
+  };
+}
+
+export async function getCategoryStats(): Promise<CategoryInfo[]> {
+  const opps = !databaseEnabled
+    ? demoState.opportunities
+    : (await query<any>(`
+        SELECT o.*, org.name_ar AS organization_name_ar, org.name_en AS organization_name_en
+        FROM opportunities o JOIN organizations org ON org.id = o.organization_id
+        WHERE o.status = 'published' ORDER BY o.created_at DESC
+      `)).rows.map(rowToOpportunity);
+
+  const grouped = new Map<OpportunityCategory, Opportunity[]>();
+  for (const opp of opps) {
+    const list = grouped.get(opp.category) ?? [];
+    list.push(opp);
+    grouped.set(opp.category, list);
+  }
+  return categoryMeta.map((cat) => {
+    const items = grouped.get(cat.slug) ?? [];
+    return {
+      ...cat,
+      count: items.length,
+      totalReach: items.reduce((s, o) => s + o.estimatedReach, 0),
+      avgPrice: items.length > 0 ? Math.round(items.reduce((s, o) => s + o.startingPrice, 0) / items.length) : 0
+    };
+  });
+}
+
+export async function listPackages(opportunityId: string): Promise<PackageTier[]> {
+  if (!databaseEnabled) {
+    return demoState.packages?.filter((p) => p.opportunityId === opportunityId) ?? [];
+  }
+  const result = await query<any>("SELECT * FROM inventory_packages WHERE opportunity_id=$1 ORDER BY price", [opportunityId]);
+  return result.rows.map((row: any) => ({
+    id: row.id,
+    opportunityId: row.opportunity_id,
+    nameAr: row.name_ar,
+    nameEn: row.name_en,
+    price: Number(row.price),
+    currency: row.currency as "SAR",
+    quantity: row.quantity ?? undefined,
+    entitlements: Array.isArray(row.entitlements) ? row.entitlements : [],
+    status: row.status ?? "available"
+  }));
+}
+
+export async function createPackage(input: {
+  opportunityId: string;
+  nameAr: string;
+  nameEn: string;
+  price: number;
+  quantity?: number;
+  entitlements: string[];
+  actorOrgId?: string;
+}): Promise<PackageTier> {
+  if (!databaseEnabled) {
+    const pkg: PackageTier = {
+      id: `pkg-${randomUUID()}`,
+      opportunityId: input.opportunityId,
+      nameAr: input.nameAr,
+      nameEn: input.nameEn,
+      price: input.price,
+      currency: "SAR",
+      quantity: input.quantity,
+      entitlements: input.entitlements,
+      status: "available"
+    };
+    if (!demoState.packages) demoState.packages = [];
+    demoState.packages.push(pkg);
+    return pkg;
+  }
+  if (!input.actorOrgId) throw new Error("Organization required");
+  const owns = await query<any>("SELECT id FROM opportunities WHERE id=$1 AND organization_id=$2", [input.opportunityId, input.actorOrgId]);
+  if (!owns.rows[0]) throw new Error("Not authorized");
+  const result = await query<any>(`
+    INSERT INTO inventory_packages (opportunity_id, name_ar, name_en, price, quantity, entitlements)
+    VALUES ($1,$2,$3,$4,$5,$6::jsonb) RETURNING *
+  `, [input.opportunityId, input.nameAr, input.nameEn, input.price, input.quantity ?? null, JSON.stringify(input.entitlements)]);
+  const row = result.rows[0];
+  return {
+    id: row.id, opportunityId: row.opportunity_id, nameAr: row.name_ar, nameEn: row.name_en,
+    price: Number(row.price), currency: "SAR", quantity: row.quantity ?? undefined,
+    entitlements: Array.isArray(row.entitlements) ? row.entitlements : [], status: row.status
+  };
+}
+
+export async function getUserSettings(userId: string): Promise<UserSettings | null> {
+  if (!databaseEnabled) {
+    return {
+      displayName: "Demo Advertiser",
+      email: "demo@sponsorloop.sa",
+      locale: "ar",
+      organizationName: "Demo Brand",
+      notifyDeals: true,
+      notifyMatches: true,
+      notifySystem: true
+    };
+  }
+  const result = await query<any>(`
+    SELECT u.*, o.name_en AS org_name FROM users u
+    JOIN memberships m ON m.user_id=u.id
+    JOIN organizations o ON o.id=m.organization_id
+    WHERE u.id=$1 LIMIT 1
+  `, [userId]);
+  const row = result.rows[0];
+  if (!row) return null;
+  return {
+    displayName: row.display_name,
+    email: row.email,
+    locale: row.locale,
+    organizationName: row.org_name,
+    notifyDeals: true,
+    notifyMatches: true,
+    notifySystem: true
+  };
+}
+
+export async function updateUserSettings(userId: string, input: { displayName?: string; locale?: string }): Promise<boolean> {
+  if (!databaseEnabled) return true;
+  const sets: string[] = [];
+  const values: unknown[] = [];
+  if (input.displayName) {
+    values.push(input.displayName);
+    sets.push(`display_name=$${values.length}`);
+  }
+  if (input.locale && (input.locale === "ar" || input.locale === "en")) {
+    values.push(input.locale);
+    sets.push(`locale=$${values.length}`);
+  }
+  if (sets.length === 0) return false;
+  values.push(userId);
+  await query(`UPDATE users SET ${sets.join(",")} WHERE id=$${values.length}`, values);
+  return true;
 }
 
 export async function register(input: { email: string; password: string; name: string; organizationName: string; role: SessionUser["role"] }): Promise<SessionUser> {

@@ -1,4 +1,4 @@
-import type { Deal, DealMessage, Notification, Opportunity, Review, SponsorshipRequest, SuccessStory } from "./types";
+import type { Deal, DealMessage, Notification, Opportunity, PackageTier, Review, SponsorshipRequest, SuccessStory } from "./types";
 
 export const demoOpportunities: Opportunity[] = [
   {
@@ -509,6 +509,84 @@ export const demoOpportunities: Opportunity[] = [
     trustScore: 84,
     availabilityScore: 91,
     performanceScore: 90
+  }
+];
+
+export const demoPackages: PackageTier[] = [
+  {
+    id: "pkg-cyber-gold",
+    opportunityId: "opp-cyber-forum",
+    nameAr: "الباقة الذهبية",
+    nameEn: "Gold Package",
+    price: 85000,
+    currency: "SAR",
+    quantity: 1,
+    entitlements: ["Main stage presence", "Premium booth", "Logo on all materials", "500 qualified leads", "Post-event report"],
+    status: "available"
+  },
+  {
+    id: "pkg-cyber-silver",
+    opportunityId: "opp-cyber-forum",
+    nameAr: "الباقة الفضية",
+    nameEn: "Silver Package",
+    price: 45000,
+    currency: "SAR",
+    quantity: 3,
+    entitlements: ["Panel slot", "Standard booth", "Logo on website", "200 qualified leads"],
+    status: "available"
+  },
+  {
+    id: "pkg-cyber-bronze",
+    opportunityId: "opp-cyber-forum",
+    nameAr: "الباقة البرونزية",
+    nameEn: "Bronze Package",
+    price: 18000,
+    currency: "SAR",
+    quantity: 5,
+    entitlements: ["Logo on website", "50 attendee contacts", "Social media mention"],
+    status: "available"
+  },
+  {
+    id: "pkg-podcast-4ep",
+    opportunityId: "opp-tech-podcast",
+    nameAr: "باقة 4 حلقات",
+    nameEn: "4-Episode Package",
+    price: 24000,
+    currency: "SAR",
+    entitlements: ["Host-read ad (4 episodes)", "Social clip per episode", "Newsletter mention"],
+    status: "available"
+  },
+  {
+    id: "pkg-podcast-8ep",
+    opportunityId: "opp-tech-podcast",
+    nameAr: "باقة 8 حلقات",
+    nameEn: "8-Episode Package",
+    price: 42000,
+    currency: "SAR",
+    entitlements: ["Host-read ad (8 episodes)", "Dedicated social content", "Newsletter feature", "Bonus interview slot"],
+    status: "available"
+  },
+  {
+    id: "pkg-esports-title",
+    opportunityId: "opp-esports",
+    nameAr: "شريك البطولة الرئيسي",
+    nameEn: "Title Tournament Partner",
+    price: 45000,
+    currency: "SAR",
+    quantity: 1,
+    entitlements: ["Title naming rights", "Arena branding", "Stream overlay", "Winner ceremony", "Social campaign"],
+    status: "available"
+  },
+  {
+    id: "pkg-esports-stream",
+    opportunityId: "opp-esports",
+    nameAr: "باقة البث المباشر",
+    nameEn: "Stream Package",
+    price: 15000,
+    currency: "SAR",
+    quantity: 4,
+    entitlements: ["Stream overlay", "Shoutouts", "Giveaway integration"],
+    status: "available"
   }
 ];
 

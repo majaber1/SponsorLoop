@@ -16,7 +16,9 @@ export const dictionary = {
       dashboard: "لوحة التحكم",
       deals: "الصفقات",
       compliance: "الثقة والامتثال",
-      pricing: "الأسعار"
+      pricing: "الأسعار",
+      categories: "التصنيفات",
+      settings: "الإعدادات"
     },
     common: {
       explore: "استكشف الفرص",
@@ -34,7 +36,16 @@ export const dictionary = {
       match: "تطابق",
       continue: "متابعة",
       back: "رجوع",
-      demo: "وضع تجريبي"
+      demo: "وضع تجريبي",
+      packages: "الباقات",
+      addPackage: "أضف باقة",
+      organization: "المنظمة",
+      profile: "الملف الشخصي",
+      notifications: "الإشعارات",
+      opportunities: "الفرص",
+      deals_count: "الصفقات",
+      rating: "التقييم",
+      totalReach: "إجمالي الوصول"
     }
   },
   en: {
@@ -46,7 +57,9 @@ export const dictionary = {
       dashboard: "Dashboard",
       deals: "Deals",
       compliance: "Trust & Compliance",
-      pricing: "Pricing"
+      pricing: "Pricing",
+      categories: "Categories",
+      settings: "Settings"
     },
     common: {
       explore: "Explore opportunities",
@@ -64,7 +77,16 @@ export const dictionary = {
       match: "match",
       continue: "Continue",
       back: "Back",
-      demo: "Demo mode"
+      demo: "Demo mode",
+      packages: "Packages",
+      addPackage: "Add package",
+      organization: "Organization",
+      profile: "Profile",
+      notifications: "Notifications",
+      opportunities: "Opportunities",
+      deals_count: "Deals",
+      rating: "Rating",
+      totalReach: "Total reach"
     }
   }
 } as const;
